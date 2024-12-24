@@ -65,5 +65,5 @@ def process_text_files(folder_path):
 
 # Main execution
 if __name__ == "__main__":
-    folder_path = "./NTA_database_test"  # Folder containing text files
+    folder_path = "./NTA_database"  # Folder containing text files
     process_text_files(folder_path)
