@@ -1,7 +1,11 @@
+import os
 import openai
 import psycopg2
+from dotenv import load_dotenv
 
-openai.api_key = 'your_openai_api_key'
+# Load environment variables from .env
+load_dotenv()
+openai.api_key = os.getenv('OPENAI_API_KEY')
 
 def generate_embedding(text):
     """Generate embeddings for the given text using OpenAI."""
@@ -25,13 +29,31 @@ def insert_into_db(content, file_name, chunk_index, embedding):
     cursor.close()
     conn.close()
 
-# Load and split your text data
-with open("nta_data.txt", "r", encoding="utf-8") as f:
-    large_text = f.read()
+def process_text_files(folder_path, chunk_size=500):
+    """Process all text files in the folder and store embeddings in the database."""
+    for file_name in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, file_name)
+        
+        if not os.path.isfile(file_path) or not file_name.endswith(".txt"):
+            continue  # Skip non-text files or directories
+        
+        with open(file_path, "r", encoding="utf-8") as file:
+            content = file.read()
 
-# Split text into chunks (e.g., by paragraphs)
-chunks = large_text.split("\n\n")  # Adjust splitting as needed
+        # Split the content into chunks
+        words = content.split()
+        chunks = [" ".join(words[i:i + chunk_size]) for i in range(0, len(words), chunk_size)]
+        
+        for chunk_index, chunk in enumerate(chunks):
+            try:
+                # Generate embedding and insert into the database
+                embedding = generate_embedding(chunk)
+                insert_into_db(chunk, file_name, chunk_index, embedding)
+                print(f"Inserted chunk {chunk_index} of {file_name} into the database.")
+            except Exception as e:
+                print(f"Error processing chunk {chunk_index} of {file_name}: {e}")
 
-for i, chunk in enumerate(chunks):
-    embedding = generate_embedding(chunk)
-    insert_into_db(chunk, "nta_data.txt", i, embedding)
+# Main execution
+if __name__ == "__main__":
+    folder_path = "./NTA_database"  # Folder containing text files
+    process_text_files(folder_path)
