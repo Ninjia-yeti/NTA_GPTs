@@ -1,5 +1,7 @@
 fastapi
 uvicorn
-psycopg2
 openai
+psycopg2
+numpy
+scipy
 python-dotenv
