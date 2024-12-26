@@ -69,44 +69,6 @@ def get_cosine_similarity(embedding1, embedding2):
     similarity = cosine_similarity(embedding1, embedding2)
     return similarity[0][0]
 
-# def similarity_search(query_embedding, top_n=5):
-#     """Perform similarity search on the database to find the closest embeddings."""
-#     conn = connect_to_db()
-#     if conn:
-#         cursor = conn.cursor()
-#         cursor.execute("""SELECT content, embedding FROM vectors""")
-#         rows = cursor.fetchall()
-#         cursor.close()
-#         conn.close()
-
-#         similarities = []  # List to store (similarity, content) tuples
-
-#         for row in rows:
-#             content, embedding = row
-
-#             # If embedding is a string (comma-separated values), convert it to a list of floats
-#             if isinstance(embedding, str):
-#                 embedding = convert_embedding_string(embedding)
-            
-#             # Reshape the embedding to (1, 1536) if it's a flat array
-#             embedding = embedding.reshape(1, -1) if embedding.ndim == 1 else embedding  # Ensure it's a 2D array
-
-#             # Compute cosine similarity between the query and stored embedding
-#             similarity = get_cosine_similarity(query_embedding, embedding)
-
-#             # Append the similarity score and corresponding content to the list
-#             similarities.append((similarity, content))
-        
-#         # Sort by similarity in descending order and return the top_n contents
-#         top_matches = sorted(similarities, key=lambda x: x[0], reverse=True)
-
-#         # Filter out matches below the minimum similarity threshold
-#         top_matches = [match for match in top_matches if match[0] >= MIN_SIMILARITY]
-
-#         return top_matches
-#     else:
-#         raise HTTPException(status_code=500, detail="Database connection failed")
-
 def similarity_search(query_embedding, top_n, min_similarity=0.7):
     """Perform similarity search on the database to find the top N closest embeddings above a minimum similarity threshold."""
     conn = connect_to_db()
