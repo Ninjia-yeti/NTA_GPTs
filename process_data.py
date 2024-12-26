@@ -1,6 +1,7 @@
 import os
 import openai
 import psycopg2
+import numpy as np
 from dotenv import load_dotenv
 from tiktoken import encoding_for_model
 
@@ -10,7 +11,7 @@ openai.api_key = os.getenv('OPENAI_API_KEY')
 
 # Load the tokenizer for the specific model
 tokenizer = encoding_for_model("text-embedding-ada-002")
-MAX_TOKENS = 8191  # Token limit for the model
+MAX_TOKENS = 500  # Token limit for the model
 
 def tokenize_and_chunk(text, max_tokens):
     """Split text into chunks based on token limits."""
@@ -21,10 +22,15 @@ def tokenize_and_chunk(text, max_tokens):
 def generate_embedding(text):
     """Generate embeddings for the given text using OpenAI."""
     response = openai.Embedding.create(input=text, model="text-embedding-ada-002")
-    return response['data'][0]['embedding']
+    embedding = response['data'][0]['embedding']
+    # Convert the embedding to a numpy array with the shape (1, 1536)
+    embedding = np.array(embedding).reshape(1, -1)
+    return embedding
 
 def insert_into_db(content, file_name, chunk_index, embedding):
     """Insert vector data into PostgreSQL."""
+    # Flatten the embedding before storing (pgvector requires a 1D array)
+    embedding_flat = embedding.flatten()
     conn = psycopg2.connect(
         host="localhost",
         database="nta_data",
@@ -35,7 +41,7 @@ def insert_into_db(content, file_name, chunk_index, embedding):
     cursor.execute("""
         INSERT INTO vectors (embedding, content, file_name, chunk_index)
         VALUES (%s, %s, %s, %s)
-    """, (embedding, content, file_name, chunk_index))
+    """, (embedding_flat.tolist(), content, file_name, chunk_index))  # Convert numpy array to list
     conn.commit()
     cursor.close()
     conn.close()
@@ -65,5 +71,5 @@ def process_text_files(folder_path):
 
 # Main execution
 if __name__ == "__main__":
-    folder_path = "./NTA_database"  # Folder containing text files
+    folder_path = "./NTA_database_test"  # Folder containing text files
     process_text_files(folder_path)
