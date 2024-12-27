@@ -3,8 +3,9 @@ import psycopg2
 import openai
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
+from fastapi import Request
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics.pairwise import cosine_similarity # type: ignore
 import tiktoken  # OpenAI's tokenizer
 
 # Load environment variables from .env file
@@ -151,32 +152,66 @@ def openai_generate_answer(query, context):
     except Exception as e:
         return str(e)
 
+# @app.post("/chat/")
+# async def chat(query: str):
+#     """Process user input and return the most relevant database result or generate a response from OpenAI."""
+#     print(f"Received query: {query}")
+    
+#     # Generate embedding for the query
+#     query_embedding = generate_embedding(query)
+    
+#     # Perform similarity search to find the closest matches in the database
+#     top_matches = similarity_search(query_embedding,top_n, MIN_SIMILARITY)
+
+#     if top_matches:
+#         # Use the content of the top match as context for OpenAI's response
+#         context = " ".join([match[1] for match in top_matches])  # Combine the top contents into a single string
+#         print(f"Found context: {context[:30]}...")  # Display first 30 characters for brevity
+#     else:
+#         # If no match is found, use a default response
+#         context = ""
+#         print("No relevant context found in the database.")
+    
+#     # Generate OpenAI's response using the query and the best match context (if any)
+#     answer = openai_generate_answer(query, context)
+    
+#     print(f"Generated answer: {answer}")
+    
+#     return {"answer": answer}
+
 @app.post("/chat/")
-async def chat(query: str):
+async def chat(request: Request):
     """Process user input and return the most relevant database result or generate a response from OpenAI."""
+    body = await request.json()
+    print(f"Received request body: {body}")  # Debug log for incoming request
+    
+    # Check if 'query' exists in the request body
+    if 'query' not in body:
+        raise HTTPException(status_code=422, detail="Missing 'query' field in request body")
+    
+    query = body['query']
     print(f"Received query: {query}")
     
     # Generate embedding for the query
     query_embedding = generate_embedding(query)
     
     # Perform similarity search to find the closest matches in the database
-    top_matches = similarity_search(query_embedding,top_n, MIN_SIMILARITY)
+    top_matches = similarity_search(query_embedding)
 
     if top_matches:
-        # Use the content of the top match as context for OpenAI's response
-        context = " ".join([match[1] for match in top_matches])  # Combine the top contents into a single string
-        print(f"Found context: {context[:30]}...")  # Display first 30 characters for brevity
+        context = " ".join([match[1] for match in top_matches])  # Combine top contents
     else:
-        # If no match is found, use a default response
-        context = ""
-        print("No relevant context found in the database.")
-    
-    # Generate OpenAI's response using the query and the best match context (if any)
+        context = "Sorry, no relevant information found in the database."
+
+    # Generate OpenAI's response
     answer = openai_generate_answer(query, context)
     
-    print(f"Generated answer: {answer}")
-    
     return {"answer": answer}
+
+
+@app.get("/")
+async def get():
+    print("--------------------------------")
 
 # Main execution (if needed, use for testing or debugging)
 if __name__ == "__main__":
