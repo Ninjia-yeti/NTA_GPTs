@@ -12,7 +12,7 @@ openai.api_key = os.getenv('OPENAI_API_KEY')
 
 # Load the tokenizer for the specific model
 tokenizer = encoding_for_model("text-embedding-ada-002")
-MAX_TOKENS = 300  # Adjusted token limit for chunking
+MAX_TOKENS = 500  # Adjusted token limit for chunking
 
 EMBEDDING_DIMENSION = 1536  # Original embedding size for `text-embedding-ada-002`
 REDUCED_DIMENSION = 512  # Reduced embedding size after PCA
