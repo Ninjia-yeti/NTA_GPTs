@@ -16,6 +16,7 @@ MAX_TOKENS = 500  # Adjusted token limit for chunking
 
 EMBEDDING_DIMENSION = 1536  # Original embedding size for `text-embedding-ada-002`
 REDUCED_DIMENSION = 512  # Reduced embedding size after PCA
+# REDUCED_DIMENSION = 1024  # Reduced embedding size after PCA
 
 # Initialize PCA for dimensionality reduction
 pca = PCA(n_components=REDUCED_DIMENSION)
