@@ -185,6 +185,7 @@ async def chat(request_body: RequestBody):
     
     # Generate embedding for the query and reduce its dimension to 512
     query_embedding = generate_embedding(query)
+    print(f"Query_Embedding",query_embedding)
     query_embedding = reduce_embedding_dimension(query_embedding)
 
     # Perform similarity search to find the closest matches in the database
